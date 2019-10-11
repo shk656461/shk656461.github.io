@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+ <!--x1="0%" x2="0%" y1="0%" y2="100%"-->
+<head>
+<style>
+    body { margin: 0; }
+    svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+}    
+</style>
+
+</head>
+
+<body>
+<!--style="position:absolute;top:200px;left:0px"-->
+<text id="id" style="position:fixed;top:0px;left:142px;width:160px; background-color:lightblue;z-index:100"></text>
+<text id="range" style="position:fixed;top:0px;left:0px;width:140px; background-color:lightblue;z-index:100"></text>
+<text id="render" style="position:fixed;top:0px;left:304px;width:200px; background-color:lightblue;z-index:100"></text>
+<text id="render_image" style="position:fixed;top:0px;left:520px;width:220px; background-color:lightblue;z-index:100"></text>
+
+<div id="vis"></div>
+<svg width="1400" height="3000"  viewBox="0 0 1400 3000">
+<defs>
+      <linearGradient id="Gradient1" x1="0%" x2="0%" y1="0%" y2="100%">
+        <stop class="stop1" offset="0%"/>
+        <stop class="stop2" offset="50%"/>
+        <stop class="stop3" offset="100%"/>
+      </linearGradient>
+      <linearGradient id="Gradient2" x1="0%" x2="0%" y1="0%" y2="100%">
+        <stop class="stop21" offset="0%"/>
+        <stop class="stop22" offset="50%"/>
+        <stop class="stop23" offset="100%"/>
+      </linearGradient>
+      <linearGradient id="Gradient3" x1="0%" x2="0%" y1="0%" y2="100%">
+        <stop class="stop31" offset="0%"/>
+        <stop class="stop32" offset="50%"/>
+        <stop class="stop33" offset="100%"/>
+      </linearGradient>
+    <filter id="f1" x="0" y="0">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3" />
+    </filter>      
+<style type="text/css"><![CDATA[
+        .gene { fill: url(#Gradient1); }
+        .stop1 { stop-color: #1E7239; }
+        .stop2 { stop-color: #7EAF8D; stop-opacity: 0.75;}
+        .stop3 { stop-color: #1E7239; }
+        .mRNA { fill: url(#Gradient2); stroke:blue;}
+        .stop21 { stop-color: blue; }
+        .stop22 { stop-color: lightblue; stop-opacity: 0.75; }
+        .stop23 { stop-color: blue; }
+        .CDS { fill:url(#Gradient3); stroke:red;}
+        .stop31 { stop-color: red; }
+        .stop32 { stop-color: tomato; stop-opacity: 0.75; }
+        .stop33 { stop-color: red; }
+        .label { text-anchor:middle; font-size:8px; font-family:sans-serif;}
+      ]]></style>      
+</defs>
+<!--.zoom {  cursor: move;  fill: none;  pointer-events: all;}
+.graph { fill: none; stroke-width:1.2;}
+-->
+
+</svg>
+<script src="common.js"></script>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script>
+
+    var node_counter = 0;
+    var svg = d3.select("svg"),
+        margin = {top: 20, right: 0, bottom: 20, left: 20},
+        width = +svg.attr("width") - margin.left - margin.right,
+        height = +svg.attr("height") - margin.top - margin.bottom;
+        g = svg.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    var canvas =
+    d3.select("#vis")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+        .append('canvas')
+        .attr('width', width)
+        .attr('height', height)
+        .node().getContext('2d');    
+    canvas.translate(0.5, 0.5);
+/*    
+    svg.append('rect')
+        .attr("transform", "translate(" + margin.left + "," + (margin.top + 20)+ ")")
+        .attr('class', 'overlay')
+        .attr('fill', 'transparent')
+        .attr('width', width)
+        .attr('height', height);
+        
+*/
+    var track_options = [{
+            id : "NC_000021",
+            seq_len: 46709983,
+            assembly: "GCF_000001405.36",
+            affinity: "affinity_token=fnamecs_e739b07d9fcf417589bc3e39f277817c",
+            tracks: "tracks=%5Bkey%3Agraph_track%2Cname%3AbpHistoneModsERX197190C0010KH1H3K4me1MACS2_wigglerEMBL-EBIwiggler%2Cdisplay_name%3A(H)%20C0010K%20H3K4me1%20MACS2_wiggler%20CD14-positive%5C%2C%20CD16-negative%20classical%20monocyte%20signal%20from%20NCMLS%2Cid%3ARB2HgQAAA9C74%2Cdbname%3AbigWig%2Csetting_group%3ABlueprint%2Cannots%3Ahttp%5C%3A%2F%2Fftp.ebi.ac.uk%2Fpub%2Fdatabases%2Fblueprint%2Fdata%2Fhomo_sapiens%2FGRCh38%2Fvenous_blood%2FC0010K%2FCD14-positive_CD16-negative_classical_monocyte%2FChIP-Seq%2FNCMLS%2FC0010KH1.ERX197190.H3K4me1.bwa.GRCh38.20150529.bw%2Cstyle%3Ahistogram%2Cscale%3Alinear%2Csmooth_curve%3Afalse%2Ccolor%3A255%20188%2058%2Copacity%3A100%2Crmt_mapped_id%3Achr21%5D",
+            data: "bw.cmprs.chr1", // should the same name as passed in --preload-file during compilation
+            locate_file: (name) => { if (name === "test.data") return "chr21.data"; else return name;}
+        },
+        {
+            id : "NC_000001.10",
+            seq_len: 249250621,
+            assembly: "GCF_000001405.13",
+            affinity: "affinity_token=fnamecs_31340a137c4bcc4754811c11edc7480a",
+            tracks: "tracks=%5Bkey%3Agraph_track%2Cname%3APhyloCSF_plus_0%2Cdisplay_name%3A(H)%20Smoothed%20PhyloCSF%20Strand%20%5C2b%20Frame%200%2Cid%3ARD1GhwAAADED8%2Cdbname%3AbigWig%2Cannots%3Ahttp%5C%3A%2F%2Fdata.broadinstitute.org%2Fcompbio1%2FPhyloCSFtracks%2Fhg19%2Flatest%2FPhyloCSF%5C2b0.bw%2Cstyle%3Ahistogram%2Cscale%3Alinear%2Csmooth_curve%3Afalse%2Copacity%3A100%2Ccolor%3A0%20175%200%5D",
+            data: "bw.cmprs.chr1",
+            locate_file: (name) => { if (name === "test.data") return "chr1.data"; else return name;}
+        }
+    ];    
+    var url_string = window.location.href; //window.location.href
+    var url = new URL(url_string);
+    var test = url.searchParams.get("test");
+    var options = track_options[0];
+    if (test) {
+        options = track_options[test];
+    }
+    var Module = {};
+    Module["locateFile"] = options.locate_file;
+
+    var CSeqViewer;
+    Module['onRuntimeInitialized'] = () => {
+        CSeqViewer.init(width, height, options);
+        //d3.select(this).on('scroll', function() {
+        //    render(CSeqViewer);
+        //});
+    }
+
+    
+function make_path(g, y) {
+    var p = d3.path();
+    for (var i in g.p.l) {
+        var x = to_screen(g.p.l[i].x);
+        var w = to_screen(g.p.l[i].x + g.p.l[i].l) - x;
+        if (g.p.s &&  g.p.s == 2) {
+            if (i > 0) 
+                p.lineTo(x + w, y + 6);
+            p.rect(x, y, w, 11);
+            p.moveTo(x, y + 6);
+        } else {
+            if (i > 0) 
+                p.lineTo(x, y + 6);
+            p.rect(x, y, w, 11);
+            p.moveTo(x + w, y + 6);
+        }
+    }
+    return p.toString();
+}    
+
+function draw_glyph(p, g, y, color)
+{
+//    ++glyph_counter;
+    var y_top = this.scrollY;
+    var y_bottom = y_top + this.innerHeight;
+    var y1 = y + 4;
+    var y2 = y +g.h;
+    var shown = (y1 >= y_top && y1 < y_bottom) || (y2 > y_top && y2 <= y_bottom);
+
+    if (Math.abs(to_screen(p.stop) - to_screen(p.start))> 10 && shown) {
+        canvas.fillStyle="black";
+        var t_len = canvas.measureText(g.l).width
+        canvas.fillText(g.l,to_screen(p.start + (p.stop - p.start)/2) - t_len/2, y + 4);
+    }
+    if (g.expanded && g.g) {
+        g.g.g.forEach(function(ch) {
+            y += 24;
+            draw_glyph(g, ch, y, color);
+        });
+    }
+}
+
+function render_image(data) 
+{
+    var gl = CSeqViewer.feat_panel.selectAll('.images');
+    gl.selectAll("*").remove();
+    gl.append('svg:image')
+        .attr("xlink:href","https://www.ncbi.nlm.nih.gov/projects/sviewer/ncfetch.cgi" + data.img_url)
+        .attr('x', 0)
+        .attr('y', 60)
+        .attr('width', data.w)
+        .attr('height', data.h);
+    d3.select('#render_image').text("Back-end render:" + Math.round(performance.now() - CSeqViewer.fetchImageStart) + "ms");
+
+}
+
+
+function render(sviewer) 
+{
+    //, function(d) { return d.i;}
+    var gl = sviewer.track.selectAll('g').data(sviewer.glyphs);
+    gl.exit().remove();
+    gl.enter().append('g')
+    .each(function(glyph) {
+        //d3.select(this).append('path').attr("class", "graph");
+        d3.select(this).append('path').attr("class", "graph1");
+        d3.select(this).append('path').attr("class", "graph2");
+    })
+    .merge(gl)
+    .each(function(glyph) {
+        
+        var y1 = 0;//glyph.y;
+        var points = glyph.data.graph.p;
+        var graph = glyph.data.graph;
+        var min = graph.min ? graph.min : 0;
+        var max = graph.max;
+        var graph_height = (max - min);
+        var y2 = glyph.h;
+        if (min >= 0)
+            y2 += glyph.y;
+
+        var area = d3.area()
+            .x(d => d.x )
+            .y0(y2)
+            .y1(d => { 
+                if (d.y == 0)
+                    return y2;
+                if (d.y >= 0)
+                    return y2  - (glyph.h * d.y)/ graph_height; 
+                return y2;    
+            });        
+        var area2 = d3.area()
+            .x(d => d.x )
+            .y0(y2)
+            .y1(d => { 
+                if (d.y == 0)
+                    return y2;
+                if (d.y < 0)    
+                    return y2  - (glyph.h * d.y)/ graph_height; 
+                return y2;
+            });        
+
+        d3.select(this).select('.graph1')
+          	.datum(points)
+            .attr("stroke", "steelblue")
+  	        .style("fill", "#69b3a2")
+            .attr("d", area)
+            .attr('transform', 'translate(0, 0)');
+
+
+        if (min < 0) {
+            d3.select(this).select('.graph2')
+                .datum(points)
+                .attr("stroke", "red")
+                .style("fill", "rgba(216, 137, 137, 0.6)")
+                .attr("d", area2);
+        }
+/*           
+        d3.select(this).select("path").datum(Points)
+            .attr("stroke", "steelblue")
+            .style("fill", "#69b3a2")
+            .attr("opacity", 0.8)
+            //.attr("stroke-linejoin", "round")
+            //.attr("d", line);
+            .attr("d", area)
+            .attr("stroke-linecap", "round");
+*/              
+            
+    });
+    var range = (sviewer.to - sviewer.from) + 1;
+    d3.select('#id').text(sviewer.options.id);
+    d3.select('#range').text("Range:" + range.toLocaleString() + "bp");
+    d3.select('#render').text("Fron-end render:" + Math.round(performance.now() - sviewer.fetchStart) + "ms");
+}
+</script>
+<script src="test.js"></script>
+</body>
+</html>
